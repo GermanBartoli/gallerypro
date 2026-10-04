@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "GalleryPRO",
+  "version": "0.1.0",
+  "description": "Encontrá fotos sin álbum con un filtro reversible y una galería en Google Fotos.",
+  "minimum_chrome_version": "120",
+  "permissions": ["storage"],
+  "icons": {"16":"assets/icon16.png","48":"assets/icon48.png","128":"assets/icon128.png"},
+  "content_scripts": [
+    {"matches":["https://photos.google.com/*"],"js":["preferences.js"],"run_at":"document_idle"},
+    {"matches":["https://photos.google.com/*"],"js":["gallerypro.js"],"world":"MAIN","run_at":"document_idle"}
+  ]
+}
