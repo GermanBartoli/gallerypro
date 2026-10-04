@@ -101,27 +101,52 @@ if (!document.getElementById('gallerypro-root')) {
     [data-gallerypro-main-expanded] { left: 0 !important; width: 100% !important; }
   `);
   document.head.append(navStyle);
-  function navigationLayout() {
-    const tab = document.querySelector('[role="tab"]');
-    let nav = document.querySelector('[data-gallerypro-nav-hidden]') || tab;
+  function navigationElements() {
     const main = document.querySelector('[role="main"]');
-    // Subir hasta el contenedor lateral hermano de la zona principal.
-    while (nav?.parentElement && nav.parentElement.getBoundingClientRect().width <= 280) nav = nav.parentElement;
-    if (nav && nav !== document.body) nav.toggleAttribute('data-gallerypro-nav-hidden',navigationHidden);
-    if (main?.parentElement) main.parentElement.toggleAttribute('data-gallerypro-main-expanded',navigationHidden);
+    const header = document.querySelector('[role="menubar"]');
+    const nav = navigationContainer(document.querySelector('[role="tab"]'),main,header);
+    return {main,header,nav};
+  }
+  function navigationLayout() {
+    const {main,nav} = navigationElements();
+    // Retirar marcas anteriores incluso si Google reemplazó el menú al navegar.
+    for (const element of document.querySelectorAll('[data-gallerypro-nav-hidden],[data-gallerypro-main-expanded]')) {
+      element.removeAttribute('data-gallerypro-nav-hidden');
+      element.removeAttribute('data-gallerypro-main-expanded');
+    }
+    if (!nav || !main?.parentElement || main.parentElement.contains(nav)) {
+      navigationHidden = false;
+      return;
+    }
+    nav.toggleAttribute('data-gallerypro-nav-hidden',navigationHidden);
+    main.parentElement.toggleAttribute('data-gallerypro-main-expanded',navigationHidden);
     $('#navigation').textContent = navigationHidden ? 'Mostrar menú izquierdo' : 'Ocultar menú izquierdo';
     window.dispatchEvent(new Event('resize'));
   }
-  const navToggle = node('button',{id:'nav-toggle','aria-label':'Ocultar menú izquierdo',title:'Ocultar menú izquierdo'},'‹');
-  navToggle.style.cssText='position:fixed;left:236px;top:66px;z-index:1000;width:28px;height:32px;padding:0;border-radius:8px;font-size:24px';
+  const navToggle = node('button',{id:'nav-toggle',class:'nav-toggle','aria-label':'Ocultar menú izquierdo',title:'Ocultar menú izquierdo','aria-expanded':'true'},'‹');
   root.append(navToggle);
+  function positionNavigationToggle() {
+    const {nav,header} = navigationElements();
+    const unavailable = !nav || !header;
+    if (navToggle.hidden !== unavailable) navToggle.hidden = unavailable;
+    if (unavailable) return;
+    const bounds = nav.getBoundingClientRect();
+    const left = navigationHidden ? 8 : Math.max(8,bounds.right-32);
+    const top = header.getBoundingClientRect().bottom + 4;
+    if (navToggle.style.left !== left+'px') navToggle.style.left = left+'px';
+    if (navToggle.style.top !== top+'px') navToggle.style.top = top+'px';
+  }
   function toggleNavigation() {
     navigationHidden=!navigationHidden;
     navigationLayout();
+    const label = navigationHidden?'Mostrar menú izquierdo':'Ocultar menú izquierdo';
     navToggle.textContent=navigationHidden?'›':'‹';
-    navToggle.style.left=navigationHidden?'4px':Math.max(4,(document.querySelector('[role="main"]')?.getBoundingClientRect().left || 256)-20)+'px';
-    navToggle.setAttribute('aria-label',navigationHidden?'Mostrar menú izquierdo':'Ocultar menú izquierdo');
+    navToggle.setAttribute('aria-label',label);
+    navToggle.setAttribute('title',label);
+    navToggle.setAttribute('aria-expanded',String(!navigationHidden));
+    positionNavigationToggle();
   }
+  positionNavigationToggle();
   navToggle.onclick=toggleNavigation;
   $('#navigation').onclick=toggleNavigation;
   function updatePhotoAlbums() {
@@ -156,7 +181,7 @@ if (!document.getElementById('gallerypro-root')) {
     clearTimeout(publishTimer);
     publishTimer = setTimeout(()=>window.dispatchEvent(new CustomEvent('gallerypro:view',{detail:{dark:host.hasAttribute('data-dark'),tree:[...root.childNodes].filter(n=>n.id!=='nav-toggle').map(snapshotNode)}})),60);
   }
-  new MutationObserver(publish).observe(root,{subtree:true,childList:true,characterData:true,attributes:true});
+  new MutationObserver(records => { if (records.some(record=>record.target!==navToggle)) publish(); }).observe(root,{subtree:true,childList:true,characterData:true,attributes:true});
   window.addEventListener('gallerypro:command',event=>{
     const {id,action,value,checked} = event.detail || {};
     if (action === 'sync') { syncTheme(); publish(); return; }
@@ -271,7 +296,7 @@ if (!document.getElementById('gallerypro-root')) {
     const current = accountIdentity();
     if (current !== identity) { reset(); identity = current; }
     syncTheme();
-    if (!navigationHidden) navToggle.style.left=Math.max(4,(document.querySelector('[role="main"]')?.getBoundingClientRect().left || 256)-20)+'px';
-    if (previousPath !== location.pathname) { previousPath = location.pathname; schedule(); updatePhotoAlbums(); }
+    positionNavigationToggle();
+    if (previousPath !== location.pathname) { previousPath = location.pathname; if (navigationHidden) navigationLayout(); schedule(); updatePhotoAlbums(); }
   },500);
 }
