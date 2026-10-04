@@ -17,6 +17,15 @@ Extensión de Chrome para encontrar fotos que no pertenecen a ningún álbum acc
 - Permite cancelar y actualizar el análisis, con progreso visible.
 - Trabaja en modo de solo lectura: no borra, mueve ni modifica contenido.
 
+## Descargas
+
+Elegí la versión desde [Releases de GitHub](https://github.com/GermanBartoli/gallerypro/releases):
+
+- **v0.2.0:** botón junto a «+» y panel lateral que ajusta el espacio de las fotos.
+- **v0.1.0:** versión original con panel flotante.
+
+Descargá el ZIP de GalleryPRO, descomprimilo y cargá esa carpeta en Chrome mediante **Cargar descomprimida**.
+
 ## Instalación
 
 Requisitos de desarrollo: Node.js 22 o posterior y Git. No hay paquetes que instalar.
@@ -31,10 +40,10 @@ npm run build
 1. Abrí `chrome://extensions` y activá **Modo de desarrollador**.
 2. Elegí **Cargar descomprimida** y seleccioná la carpeta `dist` del proyecto.
 3. Abrí o recargá [Google Fotos](https://photos.google.com/).
-4. En el panel **GalleryPRO**, pulsá **Analizar biblioteca**.
-5. Activá **Ocultar fotos con álbum** o abrí la galería cuando termine el análisis.
+4. Pulsá el botón **GalleryPRO**, a la izquierda de «+», para abrir el panel lateral. Dentro, pulsá **Analizar biblioteca**.
+5. Activá **Ocultar fotos con álbum** o abrí la galería cuando termine el análisis. Cerrá el panel con «×» para recuperar todo el ancho de Google Fotos.
 
-En Windows, `npm run package` genera `releases/gallerypro-0.1.0.zip`. Para instalar desde el ZIP, descomprimilo y seleccioná esa carpeta mediante **Cargar descomprimida**. No se utiliza un instalador de Windows.
+En Windows, `npm run package` genera `releases/gallerypro-0.2.0.zip`. Para instalar desde el ZIP, descomprimilo y seleccioná esa carpeta mediante **Cargar descomprimida**. No se utiliza un instalador de Windows.
 
 ## Cómo se interpretan los resultados
 

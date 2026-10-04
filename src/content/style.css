@@ -1,6 +1,6 @@
 :host { all: initial; color-scheme: light; font-family: system-ui, sans-serif; font-size: 14px; color: #1c2541; }
 * { box-sizing: border-box; }
-.panel { position: fixed; right: 24px; bottom: 24px; width: 340px; max-width: calc(100vw - 32px); z-index: 2147483646; padding: 20px; background: #fff; border: 1px solid #dce3ef; border-radius: 20px; box-shadow: 0 12px 55px #17243c30; }
+.panel { position: fixed; right: 0; top: 0; bottom: 0; width: var(--gallerypro-sidebar-width, 360px); z-index: 2147483646; padding: 20px; overflow-y: auto; background: #fff; border-left: 1px solid #dce3ef; box-shadow: -8px 0 30px #17243c18; }
 header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .brand { font-size: 23px; font-weight: 750; letter-spacing: -.8px; }
 .brand span,h2 span { color: #6354cf; }
