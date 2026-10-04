@@ -1,6 +1,10 @@
 # GalleryPRO
 
-**Más claridad para tu biblioteca de Google Fotos.**
+<img src="docs/media/gallerypro-logo.png" alt="GalleryPRO: más claridad para tu biblioteca de Google Fotos" width="500">
+
+Activá el filtro, encontrá las fotos sin álbum y explorá tu galería. **Pulsá el GIF para ver el video completo.**
+
+[![GalleryPRO en tres pasos: activar el filtro, ver las fotos sin álbum y explorar la galería](docs/media/gallerypro-demo.gif)](https://photos.app.goo.gl/bGoM5rxr7TchDGWR9)
 
 Extensión de Chrome para encontrar fotos que no pertenecen a ningún álbum accesible desde tu cuenta. Incluye un filtro reversible dentro de Google Fotos y una galería independiente dentro de la misma pestaña.
 
