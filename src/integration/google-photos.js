@@ -25,7 +25,7 @@ export function parsePage(data, kind) {
     if (kind === 'albums') {
       const metadata = row.at(-1)?.['72930366'];
       if (!Array.isArray(metadata)) throw new Error('Metadatos de álbum no reconocidos.');
-      return { id: row[0], auth: metadata[5] || null };
+      return { id: row[0], title: typeof metadata[1] === 'string' ? metadata[1] : 'Álbum', auth: metadata[5] || null };
     }
     if (typeof row[3] !== 'string' || !row[3]) throw new Error('No se pudo comparar una foto con sus álbumes.');
     const thumb = row[1]?.[0];

@@ -17,13 +17,21 @@ if (!document.getElementById('gallerypro-root')) {
       node('div',{id:'body'},
         node('p',{class:'intro'},'Encontrá las fotos que todavía no tienen álbum.'),
         node('div',{class:'actions'},node('button',{id:'scan',class:'primary'},'Analizar biblioteca'),node('button',{id:'cancel',disabled:''},'Cancelar')),
-        node('label',{class:'toggle'},node('input',{id:'hide',type:'checkbox'}),' Ocultar fotos con álbum'),
+        node('label',{class:'toggle'},node('input',{id:'hide',type:'checkbox'}),' Aplicar filtros en Google Fotos'),
+        node('label',{},'Álbum',node('select',{id:'album'},node('option',{value:'sin-album'},'Sin álbum'),node('option',{value:'con-album'},'Con álbum'),node('option',{value:'all'},'Todos'))),
+        node('label',{},'Tipo',node('select',{id:'type'},node('option',{value:'all'},'Fotos y videos'),node('option',{value:'photo'},'Solo fotos'),node('option',{value:'video'},'Solo videos'))),
+        node('div',{class:'dates'},node('label',{},'Desde',node('input',{id:'from',type:'date'})),node('label',{},'Hasta',node('input',{id:'to',type:'date'}))),
+        node('label',{},'Orden de galería',node('select',{id:'order'},node('option',{value:'desc'},'Más recientes primero'),node('option',{value:'asc'},'Más antiguas primero'))),
+        node('label',{},'Miniaturas',node('select',{id:'size'},node('option',{value:'120'},'Pequeñas'),node('option',{value:'170',selected:''},'Medianas'),node('option',{value:'240'},'Grandes'))),
+        node('button',{id:'navigation',class:'wide'},'Ocultar menú izquierdo'),
+        node('section',{id:'photo-albums','aria-live':'polite'}),
         node('p',{class:'status',role:'status','aria-live':'polite'},'Listo para analizar · Solo lectura'),
         node('button',{id:'gallery',class:'wide'},'Abrir galería de GalleryPRO'),
         node('small',{},'Sin modificar tus fotos. Volvé a analizar si cambian tus álbumes.'))),
-    node('dialog',{},node('header',{},node('h2',{},'Fotos sin álbum ',node('span',{},'GalleryPRO')),node('button',{id:'close'},'Cerrar')),node('div',{id:'results'}))
+    node('dialog',{},node('header',{},node('h2',{},'Galería ',node('span',{},'GalleryPRO')),node('button',{id:'close'},'Cerrar')),node('div',{id:'results'}))
   );
   const $ = selector => root.querySelector(selector);
+  $('dialog').style.display='none';
   const hidden = new Map();
   let state = null;
   let controller = null;
@@ -57,14 +65,15 @@ if (!document.getElementById('gallerypro-root')) {
     $('#panel').hidden = !open;
     launcher.setAttribute('aria-expanded',String(open));
     launcher.setAttribute('aria-label',open ? 'Cerrar panel de GalleryPRO' : 'Abrir panel de GalleryPRO');
-    document.documentElement.classList.toggle('gallerypro-sidebar-open',open);
+    // El panel nativo de Chrome reduce el viewport real de Google Fotos.
+    document.documentElement.classList.remove('gallerypro-sidebar-open');
     resizePanel();
     // Google Fotos recalcula su cuadrícula cuando cambia el espacio disponible.
     window.dispatchEvent(new Event('resize'));
     if (open) $('#collapse').focus(); else launcher.focus();
   }
   function attachLauncher() {
-    const create = document.querySelector('[aria-label="Crear y agregar fotos"], [aria-label="Create and add photos"]');
+    const create = document.querySelector('[aria-label="Crear y agregar fotos"], [aria-label="Crear y añadir fotos"], [aria-label="Create and add photos"]');
     if (!create) return;
     let anchor = create;
     while (anchor.parentElement && getComputedStyle(anchor.parentElement).display !== 'flex') anchor = anchor.parentElement;
@@ -72,13 +81,98 @@ if (!document.getElementById('gallerypro-root')) {
       anchor.before(launcherHost);
     }
   }
-  launcher.onclick = () => setPanelOpen(!panelOpen);
+  launcher.onclick = () => window.dispatchEvent(new CustomEvent('gallerypro:open-panel'));
   $('#panel').addEventListener('keydown',event => {
     if (event.key === 'Escape') { setPanelOpen(false); event.stopPropagation(); }
   });
   resizePanel();
   attachLauncher();
   window.addEventListener('resize',resizePanel);
+  function filters() {
+    return Object.fromEntries(['album','type','from','to','order','size'].map(id=>[id,$('#'+id).value]));
+  }
+  for (const id of ['album','type','from','to','order','size']) $('#'+id).onchange = () => {
+    schedule();
+    if ($('dialog').open) renderGallery($('#results'),state,api?.accountPath || '',0,filters());
+  };
+  let navigationHidden = false;
+  const navStyle = node('style',{},`
+    [data-gallerypro-nav-hidden] { display: none !important; }
+    [data-gallerypro-main-expanded] { left: 0 !important; width: 100% !important; }
+  `);
+  document.head.append(navStyle);
+  function navigationLayout() {
+    const tab = document.querySelector('[role="tab"]');
+    let nav = document.querySelector('[data-gallerypro-nav-hidden]') || tab;
+    const main = document.querySelector('[role="main"]');
+    // Subir hasta el contenedor lateral hermano de la zona principal.
+    while (nav?.parentElement && nav.parentElement.getBoundingClientRect().width <= 280) nav = nav.parentElement;
+    if (nav && nav !== document.body) nav.toggleAttribute('data-gallerypro-nav-hidden',navigationHidden);
+    if (main?.parentElement) main.parentElement.toggleAttribute('data-gallerypro-main-expanded',navigationHidden);
+    $('#navigation').textContent = navigationHidden ? 'Mostrar menú izquierdo' : 'Ocultar menú izquierdo';
+    window.dispatchEvent(new Event('resize'));
+  }
+  const navToggle = node('button',{id:'nav-toggle','aria-label':'Ocultar menú izquierdo',title:'Ocultar menú izquierdo'},'‹');
+  navToggle.style.cssText='position:fixed;left:236px;top:66px;z-index:1000;width:28px;height:32px;padding:0;border-radius:8px;font-size:24px';
+  root.append(navToggle);
+  function toggleNavigation() {
+    navigationHidden=!navigationHidden;
+    navigationLayout();
+    navToggle.textContent=navigationHidden?'›':'‹';
+    navToggle.style.left=navigationHidden?'4px':Math.max(4,(document.querySelector('[role="main"]')?.getBoundingClientRect().left || 256)-20)+'px';
+    navToggle.setAttribute('aria-label',navigationHidden?'Mostrar menú izquierdo':'Ocultar menú izquierdo');
+  }
+  navToggle.onclick=toggleNavigation;
+  $('#navigation').onclick=toggleNavigation;
+  function updatePhotoAlbums() {
+    const id = location.pathname.split('/photo/')[1];
+    const box = $('#photo-albums');
+    box.replaceChildren();
+    if (!id) return;
+    box.append(node('h3',{},'Álbumes de este elemento'));
+    const item = state?.items.get(id) || state?.albumItems.get(id) || {id};
+    const albums = albumsFor(item,state);
+    for (const album of albums) box.append(node('a',{href:'https://photos.google.com'+(api?.accountPath || '')+'/album/'+encodeURIComponent(album.id),target:'_blank',rel:'noopener noreferrer'},album.title || 'Álbum'));
+    if (!albums.length) box.append(node('p',{},state?.complete && (state.items.has(id) || state.albumItems.has(id)) ? 'Sin álbum' : 'Analizá la biblioteca para comprobar sus álbumes.'));
+    if (!state?.complete && albums.length) box.append(node('small',{},'Listado parcial: el análisis todavía no terminó.'));
+  }
+  function syncTheme() {
+    const bar = document.querySelector('[role="menubar"]');
+    const rgb = getComputedStyle(bar || document.body).backgroundColor.match(/\d+/g);
+    const dark = rgb && Number(rgb[3] ?? 1) !== 0 ? (Number(rgb[0])+Number(rgb[1])+Number(rgb[2])) < 384 : matchMedia('(prefers-color-scheme: dark)').matches;
+    if (host.hasAttribute('data-dark') !== Boolean(dark)) { host.toggleAttribute('data-dark',dark); publish(); }
+  }
+  // La vista nativa recibe únicamente el árbol de la interfaz de GalleryPRO.
+  const allowedAttributes = new Set(['id','class','type','href','src','target','rel','title','role','aria-label','aria-live','aria-expanded','disabled','hidden','open','min','max','step']);
+  function snapshotNode(element) {
+    if (element.nodeType === 3) return element.textContent;
+    if (element.nodeType !== 1) return null;
+    const attrs = Object.fromEntries([...element.attributes].filter(a=>allowedAttributes.has(a.name)).map(a=>[a.name,a.value]));
+    if (element.className === 'grid') attrs['data-size'] = $('#size').value;
+    return {tag:element.tagName.toLowerCase(),attrs,value:element.value,checked:element.checked,children:[...element.childNodes].map(snapshotNode).filter(v=>v!==null)};
+  }
+  let publishTimer;
+  function publish() {
+    clearTimeout(publishTimer);
+    publishTimer = setTimeout(()=>window.dispatchEvent(new CustomEvent('gallerypro:view',{detail:{dark:host.hasAttribute('data-dark'),tree:[...root.childNodes].filter(n=>n.id!=='nav-toggle').map(snapshotNode)}})),60);
+  }
+  new MutationObserver(publish).observe(root,{subtree:true,childList:true,characterData:true,attributes:true});
+  window.addEventListener('gallerypro:command',event=>{
+    const {id,action,value,checked} = event.detail || {};
+    if (action === 'sync') { syncTheme(); publish(); return; }
+    const element = root.getElementById(id);
+    if (!element) return;
+    if (action === 'click') element.click();
+    if (action === 'change' && ['INPUT','SELECT'].includes(element.tagName)) {
+      element.value = String(value ?? ''); element.checked = Boolean(checked);
+      element.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+    publish();
+  });
+  let actionIndex=0;
+  function identifyButtons() { for(const button of root.querySelectorAll('button')) if(!button.id) button.id='action-'+(++actionIndex); }
+  new MutationObserver(identifyButtons).observe(root,{subtree:true,childList:true});
+  identifyButtons();
   function restore() {
     for (const [element, previous] of hidden) {
       element.style.visibility = previous.visibility;
@@ -94,8 +188,8 @@ if (!document.getElementById('gallerypro-root')) {
     for (const link of document.querySelectorAll('a[href*="/photo/"]')) {
       const id = new URL(link.href).pathname.split('/photo/')[1];
       const item = state.items.get(id);
-      const member = item ? !item.video && belongsToAlbum(item,state.members) : false;
-      if (!member) continue;
+      // Ante información incompleta o desconocida, conservar la miniatura.
+      if (!item || !state.complete || matchesFilters(item,state,filters())) continue;
       // Google virtualiza la cuadrícula: conservar dimensiones mantiene el desplazamiento.
       const parent = link.parentElement;
       const element = parent && parent.querySelectorAll('a[href*="/photo/"]').length === 1 && parent.querySelector('[role="checkbox"]') ? parent : link;
@@ -113,7 +207,8 @@ if (!document.getElementById('gallerypro-root')) {
     state = next;
     status(next.phase + ' · ' + next.processedAlbums + '/' + next.albums + ' álbumes · ' + next.items.size + ' elementos');
     schedule();
-    if ($('dialog').open && next.complete) renderGallery($('#results'),state,api.accountPath);
+    updatePhotoAlbums();
+    if ($('dialog').open && next.complete) renderGallery($('#results'),state,api.accountPath,0,filters());
   }
   function reset() {
     controller?.abort();
@@ -122,7 +217,8 @@ if (!document.getElementById('gallerypro-root')) {
     api = null;
     restore();
     $('#results').replaceChildren();
-    $('dialog').close();
+    $('#photo-albums').replaceChildren();
+    $('dialog').removeAttribute('open');
     $('#scan').disabled = false;
     $('#cancel').disabled = true;
     status('Cambió la cuenta. Analizá de nuevo para ver sus resultados.');
@@ -144,7 +240,7 @@ if (!document.getElementById('gallerypro-root')) {
       if (controller === active) {
         if (state) state.complete = false;
         status(active.signal.aborted ? 'Análisis cancelado · Resultados incompletos' : (error.name === 'TimeoutError' ? 'Google Fotos tardó demasiado · Análisis incompleto' : error.message));
-        if ($('dialog').open) renderGallery($('#results'),state,api?.accountPath || '');
+        if ($('dialog').open) renderGallery($('#results'),state,api?.accountPath || '',0,filters());
       }
     } finally {
       if (controller === active) {
@@ -161,10 +257,10 @@ if (!document.getElementById('gallerypro-root')) {
     schedule();
   };
   $('#gallery').onclick = () => {
-    renderGallery($('#results'),state,api?.accountPath || '');
-    $('dialog').showModal();
+    renderGallery($('#results'),state,api?.accountPath || '',0,filters());
+    $('dialog').setAttribute('open','');
   };
-  $('#close').onclick = () => $('dialog').close();
+  $('#close').onclick = () => $('dialog').removeAttribute('open');
   $('#collapse').onclick = () => setPanelOpen(false);
   window.addEventListener('gallerypro:settings', event => { if (typeof event.detail === 'boolean') { $('#hide').checked = event.detail; schedule(); } });
   window.dispatchEvent(new CustomEvent('gallerypro:preferences',{detail:'read'}));
@@ -174,6 +270,8 @@ if (!document.getElementById('gallerypro-root')) {
   setInterval(() => {
     const current = accountIdentity();
     if (current !== identity) { reset(); identity = current; }
-    if (previousPath !== location.pathname) { previousPath = location.pathname; schedule(); }
+    syncTheme();
+    if (!navigationHidden) navToggle.style.left=Math.max(4,(document.querySelector('[role="main"]')?.getBoundingClientRect().left || 256)-20)+'px';
+    if (previousPath !== location.pathname) { previousPath = location.pathname; schedule(); updatePhotoAlbums(); }
   },500);
 }

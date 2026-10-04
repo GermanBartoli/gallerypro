@@ -13,3 +13,5 @@ GalleryPRO analiza datos de Google Fotos solamente cuando se pulsa **Analizar bi
 El permiso `storage` guarda preferencias locales. Los scripts se ejecutan exclusivamente en `https://photos.google.com/*`; no se solicita acceso general al historial, cookies ni otras páginas.
 
 Desactivar la extensión y recargar Google Fotos elimina los controles y cualquier efecto visual del filtro.
+
+El permiso `sidePanel` permite abrir la interfaz lateral nativa de Chrome. Los mensajes entre la página y ese panel permanecen dentro de la extensión; el índice y los resultados no se guardan en disco.

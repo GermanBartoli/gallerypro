@@ -20,3 +20,9 @@ for (const file of await readdir(path.join(root,'assets'))) await copyFile(path.
 for (const file of ['LICENSE','THIRD_PARTY_NOTICES.md']) await copyFile(path.join(root,file),path.join(dist,file));
 execFileSync(process.execPath,['--check',path.join(dist,'gallerypro.js')]);
 console.log('GalleryPRO compilado en dist/');
+
+await mkdir(path.join(dist,'sidebar'),{recursive:true});
+for(const file of ['background.js','panel.js','panel.html']) {
+  if(file.endsWith('.js')) execFileSync(process.execPath,['--check',path.join(root,'src/sidebar',file)]);
+  await copyFile(path.join(root,'src/sidebar',file),path.join(dist,'sidebar',file));
+}
