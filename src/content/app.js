@@ -12,8 +12,8 @@ if (!document.getElementById('gallerypro-root')) {
   }
   root.append(
     node('style',{},'__GALLERYPRO_CSS__'),
-    node('section',{class:'panel','aria-label':'GalleryPRO'},
-      node('header',{},node('span',{class:'brand'},'▧ Gallery',node('span',{},'PRO')),node('button',{id:'collapse','aria-label':'Minimizar panel'},'−')),
+    node('section',{class:'panel',id:'panel','aria-label':'GalleryPRO',hidden:''},
+      node('header',{},node('span',{class:'brand'},'▧ Gallery',node('span',{},'PRO')),node('button',{id:'collapse','aria-label':'Cerrar panel de GalleryPRO'},'×')),
       node('div',{id:'body'},
         node('p',{class:'intro'},'Encontrá las fotos que todavía no tienen álbum.'),
         node('div',{class:'actions'},node('button',{id:'scan',class:'primary'},'Analizar biblioteca'),node('button',{id:'cancel',disabled:''},'Cancelar')),
@@ -30,7 +30,55 @@ if (!document.getElementById('gallerypro-root')) {
   let api = null;
   let identity = accountIdentity();
   let scheduled = false;
-  let collapsed = false;
+  let panelOpen = false;
+  const launcherHost = node('span',{id:'gallerypro-launcher'});
+  const launcherRoot = launcherHost.attachShadow({mode:'open'});
+  const launcher = node('button',{
+    type:'button',title:'GalleryPRO','aria-label':'Abrir panel de GalleryPRO','aria-expanded':'false'
+  },'▧');
+  launcherRoot.append(node('style',{},`
+    :host { display: inline-flex; align-items: center; margin-right: 4px; }
+    button { width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: #8b7ce8; font: 28px system-ui; cursor: pointer; }
+    button:hover,button[aria-expanded="true"] { background: #6354cf22; }
+    button:focus-visible { outline: 2px solid #8b7ce8; outline-offset: 2px; }
+  `),launcher);
+  const layoutStyle = node('style',{id:'gallerypro-layout'},`
+    html.gallerypro-sidebar-open #yDmH0d { position: relative !important; width: calc(100% - var(--gallerypro-sidebar-width)) !important; }
+  `);
+  document.head.append(layoutStyle);
+  function sidebarWidth() { return Math.min(360, Math.floor(window.innerWidth * .45)); }
+  function resizePanel() {
+    const width = sidebarWidth() + 'px';
+    host.style.setProperty('--gallerypro-sidebar-width',width);
+    document.documentElement.style.setProperty('--gallerypro-sidebar-width',width);
+  }
+  function setPanelOpen(open) {
+    panelOpen = open;
+    $('#panel').hidden = !open;
+    launcher.setAttribute('aria-expanded',String(open));
+    launcher.setAttribute('aria-label',open ? 'Cerrar panel de GalleryPRO' : 'Abrir panel de GalleryPRO');
+    document.documentElement.classList.toggle('gallerypro-sidebar-open',open);
+    resizePanel();
+    // Google Fotos recalcula su cuadrícula cuando cambia el espacio disponible.
+    window.dispatchEvent(new Event('resize'));
+    if (open) $('#collapse').focus(); else launcher.focus();
+  }
+  function attachLauncher() {
+    const create = document.querySelector('[aria-label="Crear y agregar fotos"], [aria-label="Create and add photos"]');
+    if (!create) return;
+    let anchor = create;
+    while (anchor.parentElement && getComputedStyle(anchor.parentElement).display !== 'flex') anchor = anchor.parentElement;
+    if (anchor.parentElement && (launcherHost.parentElement !== anchor.parentElement || launcherHost.nextSibling !== anchor)) {
+      anchor.before(launcherHost);
+    }
+  }
+  launcher.onclick = () => setPanelOpen(!panelOpen);
+  $('#panel').addEventListener('keydown',event => {
+    if (event.key === 'Escape') { setPanelOpen(false); event.stopPropagation(); }
+  });
+  resizePanel();
+  attachLauncher();
+  window.addEventListener('resize',resizePanel);
   function restore() {
     for (const [element, previous] of hidden) {
       element.style.visibility = previous.visibility;
@@ -117,16 +165,11 @@ if (!document.getElementById('gallerypro-root')) {
     $('dialog').showModal();
   };
   $('#close').onclick = () => $('dialog').close();
-  $('#collapse').onclick = () => {
-    collapsed = !collapsed;
-    $('#body').hidden = collapsed;
-    $('#collapse').textContent = collapsed ? '+' : '−';
-    $('#collapse').setAttribute('aria-label',collapsed ? 'Expandir panel' : 'Minimizar panel');
-  };
+  $('#collapse').onclick = () => setPanelOpen(false);
   window.addEventListener('gallerypro:settings', event => { if (typeof event.detail === 'boolean') { $('#hide').checked = event.detail; schedule(); } });
   window.dispatchEvent(new CustomEvent('gallerypro:preferences',{detail:'read'}));
   // No observar los atributos que modifica el filtro, para evitar ciclos.
-  new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['href']});
+  new MutationObserver(() => { attachLauncher(); schedule(); }).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['href']});
   let previousPath = location.pathname;
   setInterval(() => {
     const current = accountIdentity();
