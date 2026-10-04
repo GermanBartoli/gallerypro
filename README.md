@@ -21,6 +21,7 @@ Extensión de Chrome para encontrar fotos que no pertenecen a ningún álbum acc
 
 Elegí la versión desde [Releases de GitHub](https://github.com/GermanBartoli/gallerypro/releases):
 
+- **v0.3.0 (preliminar):** panel nativo de Chrome, flecha del menú izquierdo, filtros combinados, álbumes por foto, galería configurable y tema automático.
 - **v0.2.0:** botón junto a «+» y panel lateral que ajusta el espacio de las fotos.
 - **v0.1.0:** versión original con panel flotante.
 
@@ -41,9 +42,13 @@ npm run build
 2. Elegí **Cargar descomprimida** y seleccioná la carpeta `dist` del proyecto.
 3. Abrí o recargá [Google Fotos](https://photos.google.com/).
 4. Pulsá el botón **GalleryPRO**, a la izquierda de «+», para abrir el panel lateral. Dentro, pulsá **Analizar biblioteca**.
-5. Activá **Ocultar fotos con álbum** o abrí la galería cuando termine el análisis. Cerrá el panel con «×» para recuperar todo el ancho de Google Fotos.
+5. Elegí álbum, tipo y fechas. Activá **Aplicar filtros en Google Fotos** o abrí la galería. Cerrá el panel desde la cabecera nativa de Chrome para recuperar el ancho.
+6. Usá la flechita junto al menú izquierdo para ocultarlo o mostrarlo. En la galería podés ordenar, ajustar miniaturas y navegar con flechas, Inicio y Fin; Enter abre el original.
+7. Al abrir una foto en la misma pestaña, el panel muestra sus álbumes después del análisis. El tema acompaña a Google Fotos.
 
-En Windows, `npm run package` genera `releases/gallerypro-0.2.0.zip`. Para instalar desde el ZIP, descomprimilo y seleccioná esa carpeta mediante **Cargar descomprimida**. No se utiliza un instalador de Windows.
+La versión 0.3.0 añade el permiso `sidePanel`. Tras actualizar, recargá la extensión y Google Fotos. La integración nativa de Chrome está pendiente de prueba manual completa; por eso esta Release es preliminar.
+
+En Windows, `npm run package` genera `releases/gallerypro-0.3.0.zip`. Para instalar desde el ZIP, descomprimilo y seleccioná esa carpeta mediante **Cargar descomprimida**. No se utiliza un instalador de Windows.
 
 ## Cómo se interpretan los resultados
 
@@ -58,7 +63,7 @@ La galería no muestra resultados definitivos durante un análisis parcial, canc
 ## Límites de esta versión
 
 - **Integración experimental:** utiliza consultas de lectura no documentadas de la web de Google Fotos. Google puede cambiarlas sin aviso. La [API oficial](https://developers.google.com/photos/support/updates) no permite analizar una biblioteca existente completa.
-- El alcance es la biblioteca principal. No analiza archivo, papelera ni carpeta privada. La galería muestra fotos; los videos no se ocultan.
+- El alcance es la biblioteca principal. No analiza archivo, papelera ni carpeta privada. Los filtros permiten elegir fotos, videos o ambos.
 - Se incluyen los álbumes compartidos presentes en tu colección. Un enlace compartido no incorporado a ella, o contenido sin acceso, no puede considerarse analizado.
 - La cuadrícula de Google Fotos es virtual: para conservar su desplazamiento, el filtro mantiene el espacio de las miniaturas ocultas. La galería ofrece una vista compacta sin esos espacios.
 - Los resultados son una fotografía del momento del análisis. Después de modificar álbumes, usá **Actualizar análisis**.

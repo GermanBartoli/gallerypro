@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { analyze, classify, readPages } from '../src/core/analysis.js';
+import { analyze, classify, readPages, albumsFor, matchesFilters } from '../src/core/analysis.js';
 import { createGoogleApi, decodeEnvelope, parsePage, safeThumbnail } from '../src/integration/google-photos.js';
 
 const item = (id,key=id) => ({id,key,thumb:'',video:false});
@@ -104,4 +104,24 @@ test('rechaza resultados si cambia la cuenta durante la solicitud',async()=>{
     globalThis.location=originalLocation;
     globalThis.fetch=originalFetch;
   }
+});
+
+
+test('filtros combinados por álbum, tipo y límites inclusivos de fecha',()=>{
+  const state={members:new Set(['a']),complete:true};
+  const photo={id:'a',video:false,timestamp:new Date('2026-10-04T23:59:59').getTime()};
+  assert.equal(matchesFilters(photo,state,{album:'con-album',type:'photo',from:'2026-10-04',to:'2026-10-04'}),true);
+  assert.equal(matchesFilters(photo,state,{album:'sin-album',type:'photo'}),false);
+  assert.equal(matchesFilters(photo,state,{album:'all',type:'video'}),false);
+  assert.equal(matchesFilters(photo,state,{album:'all',type:'photo',to:'2026-10-03'}),false);
+  assert.equal(matchesFilters({...photo,timestamp:NaN},state,{from:'2026-10-01'}),false);
+  assert.equal(matchesFilters({id:'b',video:true},state,{album:'sin-album',type:'video'}),true);
+  assert.equal(matchesFilters({id:'b'}, {...state,complete:false},{album:'sin-album'}),false);
+});
+
+test('conserva todos los álbumes de una foto sin repetirlos por identificadores equivalentes',async()=>{
+  const albums=[{id:'uno',title:'Viaje'},{id:'dos',title:'Familia'}];
+  const state=await analyze({albums:async()=>page(albums),album:async()=>page([item('en-album','clave')]),library:async()=>page([item('en-biblioteca','clave')])},signal(),()=>{});
+  assert.deepEqual(albumsFor(state.items.get('en-biblioteca'),state).map(a=>a.title),['Viaje','Familia']);
+  assert.equal(albumsFor({id:'en-album',key:'clave'},state).length,2);
 });

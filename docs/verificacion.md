@@ -31,3 +31,7 @@ El cambio de cuenta durante una solicitud está cubierto con datos ficticios; no
 3. Activar el filtro, recargar y comprobar que la preferencia se conserva, pero el análisis debe iniciarse de nuevo.
 4. Analizar, abrir la galería y desactivar el filtro.
 5. Cambiar de cuenta y comprobar que ningún resultado anterior permanece disponible.
+
+## Versión 0.3.0 preliminar
+
+Se verificaron 13 pruebas automáticas, compilación y lectura completa de una biblioteca real desde el navegador integrado. La nueva interfaz se probó mediante un canal local de prueba; el panel nativo instalado y su comportamiento al cambiar de pestaña requieren validación manual en Chrome. La Release se publica como preliminar hasta completar esa comprobación.
