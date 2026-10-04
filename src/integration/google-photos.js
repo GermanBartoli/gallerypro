@@ -82,3 +82,13 @@ export function createGoogleApi() {
     library: async (cursor,signal) => parsePage(await rpc('lcxiM',[cursor,null,500,null,1,1],signal),'library')
   };
 }
+
+// Los contenedores de Google pueden medir cero aunque contengan toda la aplicación.
+export function navigationContainer(tab, main, header) {
+  if (!tab || !main || !header) return null;
+  let candidate = tab;
+  while (candidate.parentElement && !candidate.parentElement.contains(main) && !candidate.parentElement.contains(header)) {
+    candidate = candidate.parentElement;
+  }
+  return candidate.contains(main) || candidate.contains(header) ? null : candidate;
+}

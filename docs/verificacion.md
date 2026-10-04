@@ -35,3 +35,7 @@ El cambio de cuenta durante una solicitud está cubierto con datos ficticios; no
 ## Versión 0.3.0 preliminar
 
 Se verificaron 13 pruebas automáticas, compilación y lectura completa de una biblioteca real desde el navegador integrado. La nueva interfaz se probó mediante un canal local de prueba; el panel nativo instalado y su comportamiento al cambiar de pestaña requieren validación manual en Chrome. La Release se publica como preliminar hasta completar esa comprobación.
+
+### Corrección del menú izquierdo en v0.3.0
+
+Se reemplazó la selección por ancho por una selección estructural que nunca incluye la cabecera ni el área principal. Se verificaron cierres y aperturas repetidas en Álbumes y Fotos: el contenido permanece visible, el área principal ocupa el espacio liberado y recupera su posición al restaurar el menú. Las 14 pruebas automatizadas y la compilación pasan.

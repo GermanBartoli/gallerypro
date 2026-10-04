@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { analyze, classify, readPages, albumsFor, matchesFilters } from '../src/core/analysis.js';
-import { createGoogleApi, decodeEnvelope, parsePage, safeThumbnail } from '../src/integration/google-photos.js';
+import { createGoogleApi, decodeEnvelope, parsePage, safeThumbnail, navigationContainer } from '../src/integration/google-photos.js';
 
 const item = (id,key=id) => ({id,key,thumb:'',video:false});
 const page = (items,next=null) => ({items,next});
@@ -124,4 +124,16 @@ test('conserva todos los álbumes de una foto sin repetirlos por identificadores
   const state=await analyze({albums:async()=>page(albums),album:async()=>page([item('en-album','clave')]),library:async()=>page([item('en-biblioteca','clave')])},signal(),()=>{});
   assert.deepEqual(albumsFor(state.items.get('en-biblioteca'),state).map(a=>a.title),['Viaje','Familia']);
   assert.equal(albumsFor({id:'en-album',key:'clave'},state).length,2);
+});
+
+
+test('el menú nunca incluye la cabecera ni las fotos aunque sus ancestros midan cero',()=>{
+  function element(parentElement=null) {
+    return {parentElement,contains(child){for(let node=child;node;node=node.parentElement)if(node===this)return true;return false;}};
+  }
+  const app=element(),shell=element(app),header=element(shell),nav=element(shell),tab=element(nav),main=element(app);
+  assert.equal(navigationContainer(tab,main,header),nav);
+  assert.equal(navigationContainer(tab,null,header),null);
+  assert.equal(navigationContainer(tab,main,null),null);
+  assert.equal(navigationContainer(null,main,header),null);
 });
