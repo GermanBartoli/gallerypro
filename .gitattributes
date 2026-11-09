@@ -3,3 +3,4 @@
 *.jpg binary
 *.gif binary
 *.zip binary
+*.yaml text eol=crlf

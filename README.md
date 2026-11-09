@@ -51,8 +51,8 @@ Requisitos de desarrollo: Node.js 22 o posterior y Git. No hay paquetes que inst
 ```sh
 git clone https://github.com/GermanBartoli/gallerypro.git
 cd gallerypro
-npm test
-npm run build
+pnpm test
+pnpm run build
 ```
 
 1. Abrí `chrome://extensions` y activá **Modo de desarrollador**.
@@ -65,7 +65,7 @@ npm run build
 
 La versión 0.3.0 añade el permiso `sidePanel`. Tras actualizar, recargá la extensión y Google Fotos. La integración nativa de Chrome está pendiente de prueba manual completa; por eso esta Release es preliminar.
 
-En Windows, `npm run package` genera `releases/gallerypro-0.3.0.zip`. Para instalar desde el ZIP, descomprimilo y seleccioná esa carpeta mediante **Cargar descomprimida**. No se utiliza un instalador de Windows.
+En Windows, `pnpm run package` genera `releases/gallerypro-0.3.0.zip`. Para instalar desde el ZIP, descomprimilo y seleccioná esa carpeta mediante **Cargar descomprimida**. No se utiliza un instalador de Windows.
 
 ## Cómo se interpretan los resultados
 
@@ -108,7 +108,7 @@ docs/              Arquitectura, privacidad y verificación
 
 ## Desarrollo
 
-`npm test` ejecuta las pruebas de Node; `npm run build` valida la sintaxis y genera la extensión; `npm run package` crea el ZIP en Windows. GitHub Actions valida pruebas y compilación, y guarda un artefacto instalable.
+`pnpm test` ejecuta las pruebas de Node; `pnpm run build` valida la sintaxis y genera la extensión; `pnpm run package` crea el ZIP en Windows. GitHub Actions valida pruebas y compilación, y guarda un artefacto instalable.
 
 Ver [arquitectura](docs/arquitectura.md), [verificación](docs/verificacion.md) y [cómo contribuir](CONTRIBUTING.md).
 
