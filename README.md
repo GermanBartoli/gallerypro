@@ -1,5 +1,22 @@
 # GalleryPRO
 
+**Encontrá fotos sin álbum y explorá tu biblioteca de Google Fotos con filtros y una galería independiente.**
+
+[![Repositorio](https://img.shields.io/badge/GitHub-GermanBartoli-181717?logo=github)](https://github.com/GermanBartoli/gallerypro)
+[![Verificaciones](https://github.com/GermanBartoli/gallerypro/actions/workflows/validar.yml/badge.svg)](https://github.com/GermanBartoli/gallerypro/actions/workflows/validar.yml)
+
+[Descargas](https://github.com/GermanBartoli/gallerypro/releases) · [Empezar](#primeros-pasos) · [Mapa del repositorio](#mapa-del-repositorio) · [Autoría](#autoría-de-esta-documentación)
+
+![Vista del proyecto: GalleryPRO](docs/media/gallerypro-demo.gif)
+
+## Primeros pasos
+
+1. Instalá el ZIP de la versión elegida siguiendo la sección Instalación.
+2. Abrí Google Fotos, pulsá GalleryPRO y luego **Analizar biblioteca**. Esperá a que termine antes de interpretar «Sin álbum».
+3. Combiná filtros, abrí la galería o consultá los álbumes de una foto. Usá Actualizar análisis después de cambiar tu biblioteca.
+
+## Referencia y detalles
+
 <img src="docs/media/gallerypro-logo.png" alt="GalleryPRO: más claridad para tu biblioteca de Google Fotos" width="500">
 
 Activá el filtro, encontrá las fotos sin álbum y explorá tu galería. **Pulsá el GIF para ver el video completo.**
@@ -98,3 +115,18 @@ Ver [arquitectura](docs/arquitectura.md), [verificación](docs/verificacion.md) 
 ## Licencia y créditos
 
 Licencia MIT. El adaptador utiliza información del protocolo contrastada con [Google Photos Toolkit](https://github.com/xob0t/Google-Photos-Toolkit). Se conservan sus avisos MIT en [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Mapa del repositorio
+
+- [package.json](<package.json>)
+- [CONTRIBUTING.md](<CONTRIBUTING.md>)
+- [LICENSE](<LICENSE>)
+- [docs/arquitectura.md](<docs/arquitectura.md>)
+- [docs/privacidad.md](<docs/privacidad.md>)
+- [docs/verificacion.md](<docs/verificacion.md>)
+
+## Autoría de esta documentación
+
+Repositorio mantenido por [Germán Bartoli](https://github.com/GermanBartoli). Guía revisada y actualizada con **Codex**, coautor de esta actualización documental. Los autores, colaboradores, licencias y recursos de terceros conservan sus créditos originales.
+
+Los commits de esta revisión incluyen `Co-authored-by: Codex <noreply@openai.com>`; esta atribución no modifica la autoría del historial anterior.
