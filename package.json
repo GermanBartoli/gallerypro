@@ -1,6 +1,6 @@
 {
   "name": "gallerypro",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "private": true,
   "type": "module",
   "description": "Herramientas para explorar Google Fotos y encontrar fotos sin álbum",
@@ -10,7 +10,7 @@
     "package": "pnpm run build && powershell -NoProfile -File scripts/package.ps1"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "license": "MIT",
   "packageManager": "pnpm@12.18.0"

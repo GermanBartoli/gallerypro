@@ -46,7 +46,7 @@ Descargá el ZIP de GalleryPRO, descomprimilo y cargá esa carpeta en Chrome med
 
 ## Instalación
 
-Requisitos de desarrollo: Node.js 22 o posterior y Git. No hay paquetes que instalar.
+Requisitos de desarrollo: Node.js 24 o posterior y Git. No hay paquetes que instalar.
 
 ```sh
 git clone https://github.com/GermanBartoli/gallerypro.git
