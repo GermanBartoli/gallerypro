@@ -7,8 +7,6 @@
 
 [Descargas](https://github.com/GermanBartoli/gallerypro/releases) · [Empezar](#primeros-pasos) · [Mapa del repositorio](#mapa-del-repositorio) · [Autoría](#autoría-de-esta-documentación)
 
-![Vista del proyecto: GalleryPRO](docs/media/gallerypro-demo.gif)
-
 ## Primeros pasos
 
 1. Instalá el ZIP de la versión elegida siguiendo la sección Instalación.
