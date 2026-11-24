@@ -13,6 +13,7 @@ window.addEventListener('gallerypro:open-panel',()=>{
   chrome.runtime.sendMessage({kind:'open-panel'}).catch(()=>{});
 });
 window.addEventListener('gallerypro:view',event=>{
+  if (!event.detail?.filtros || !Array.isArray(event.detail.albumes) || !Array.isArray(event.detail.fotos)) return;
   chrome.runtime.sendMessage({kind:'view',snapshot:event.detail}).catch(()=>{});
 });
 chrome.runtime.onMessage.addListener(message=>{

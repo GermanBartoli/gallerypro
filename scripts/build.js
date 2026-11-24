@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 const root = fileURLToPath(new URL('../',import.meta.url));
 const dist = path.join(root,'dist');
 await mkdir(path.join(dist,'assets'),{recursive:true});
-const sources = ['src/core/analysis.js','src/integration/google-photos.js','src/gallery/view.js','src/content/app.js'];
+const sources = ['src/core/analysis.js','src/integration/google-photos.js','src/gallery/view.js','src/content/plantilla.js','src/content/app.js'];
 let bundle = '(function () {\n"use strict";\n';
 for (const file of sources) {
   execFileSync(process.execPath,['--check',path.join(root,file)]);
@@ -22,7 +22,8 @@ execFileSync(process.execPath,['--check',path.join(dist,'gallerypro.js')]);
 console.log('GalleryPRO compilado en dist/');
 
 await mkdir(path.join(dist,'sidebar'),{recursive:true});
-for(const file of ['background.js','panel.js','panel.html']) {
+await writeFile(path.join(dist,'sidebar','plantilla.js'),(await readFile(path.join(root,'src/content/plantilla.js'),'utf8')).replace('__GALLERYPRO_CSS__',()=>css));
+for(const file of ['background.js','panel.js','panel.html','urls.js']) {
   if(file.endsWith('.js')) execFileSync(process.execPath,['--check',path.join(root,'src/sidebar',file)]);
   await copyFile(path.join(root,'src/sidebar',file),path.join(dist,'sidebar',file));
 }

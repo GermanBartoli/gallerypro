@@ -3,33 +3,7 @@ if (!document.getElementById('gallerypro-root')) {
   host.id = 'gallerypro-root';
   document.documentElement.append(host);
   const root = host.attachShadow({mode:'open'});
-  // Crear nodos explícitos respeta Trusted Types de Google Fotos, sin políticas adicionales.
-  function node(tag, attributes = {}, ...children) {
-    const element = document.createElement(tag);
-    for (const [key,value] of Object.entries(attributes)) element.setAttribute(key,value);
-    element.append(...children);
-    return element;
-  }
-  root.append(
-    node('style',{},'__GALLERYPRO_CSS__'),
-    node('section',{class:'panel',id:'panel','aria-label':'GalleryPRO',hidden:''},
-      node('header',{},node('span',{class:'brand'},'▧ Gallery',node('span',{},'PRO')),node('button',{id:'collapse','aria-label':'Cerrar panel de GalleryPRO'},'×')),
-      node('div',{id:'body'},
-        node('p',{class:'intro'},'Encontrá las fotos que todavía no tienen álbum.'),
-        node('div',{class:'actions'},node('button',{id:'scan',class:'primary'},'Analizar biblioteca'),node('button',{id:'cancel',disabled:''},'Cancelar')),
-        node('label',{class:'toggle'},node('input',{id:'hide',type:'checkbox'}),' Aplicar filtros en Google Fotos'),
-        node('label',{},'Álbum',node('select',{id:'album'},node('option',{value:'sin-album'},'Sin álbum'),node('option',{value:'con-album'},'Con álbum'),node('option',{value:'all'},'Todos'))),
-        node('label',{},'Tipo',node('select',{id:'type'},node('option',{value:'all'},'Fotos y videos'),node('option',{value:'photo'},'Solo fotos'),node('option',{value:'video'},'Solo videos'))),
-        node('div',{class:'dates'},node('label',{},'Desde',node('input',{id:'from',type:'date'})),node('label',{},'Hasta',node('input',{id:'to',type:'date'}))),
-        node('label',{},'Orden de galería',node('select',{id:'order'},node('option',{value:'desc'},'Más recientes primero'),node('option',{value:'asc'},'Más antiguas primero'))),
-        node('label',{},'Miniaturas',node('select',{id:'size'},node('option',{value:'120'},'Pequeñas'),node('option',{value:'170',selected:''},'Medianas'),node('option',{value:'240'},'Grandes'))),
-        node('button',{id:'navigation',class:'wide'},'Ocultar menú izquierdo'),
-        node('section',{id:'photo-albums','aria-live':'polite'}),
-        node('p',{class:'status',role:'status','aria-live':'polite'},'Listo para analizar · Solo lectura'),
-        node('button',{id:'gallery',class:'wide'},'Abrir galería de GalleryPRO'),
-        node('small',{},'Sin modificar tus fotos. Volvé a analizar si cambian tus álbumes.'))),
-    node('dialog',{},node('header',{},node('h2',{},'Galería ',node('span',{},'GalleryPRO')),node('button',{id:'close'},'Cerrar')),node('div',{id:'results'}))
-  );
+  montarPanel(root);
   const $ = selector => root.querySelector(selector);
   $('dialog').style.display='none';
   const hidden = new Map();
@@ -167,19 +141,27 @@ if (!document.getElementById('gallerypro-root')) {
     const dark = rgb && Number(rgb[3] ?? 1) !== 0 ? (Number(rgb[0])+Number(rgb[1])+Number(rgb[2])) < 384 : matchMedia('(prefers-color-scheme: dark)').matches;
     if (host.hasAttribute('data-dark') !== Boolean(dark)) { host.toggleAttribute('data-dark',dark); publish(); }
   }
-  // La vista nativa recibe únicamente el árbol de la interfaz de GalleryPRO.
-  const allowedAttributes = new Set(['id','class','type','href','src','target','rel','title','role','aria-label','aria-live','aria-expanded','disabled','hidden','open','min','max','step']);
-  function snapshotNode(element) {
-    if (element.nodeType === 3) return element.textContent;
-    if (element.nodeType !== 1) return null;
-    const attrs = Object.fromEntries([...element.attributes].filter(a=>allowedAttributes.has(a.name)).map(a=>[a.name,a.value]));
-    if (element.className === 'grid') attrs['data-size'] = $('#size').value;
-    return {tag:element.tagName.toLowerCase(),attrs,value:element.value,checked:element.checked,children:[...element.childNodes].map(snapshotNode).filter(v=>v!==null)};
+  function datosPanel() {
+    const resultados = $('#results');
+    const albumes = $('#photo-albums');
+    return {
+      filtros: filters(), oscuro: host.hasAttribute('data-dark'), ocultar: $('#hide').checked,
+      ocupado: $('#scan').disabled, actualizar: $('#scan').textContent === 'Actualizar análisis',
+      navegacionOculta: navigationHidden, estado: $('.status').textContent,
+      fotoAbierta: Boolean(albumes.querySelector('h3')), sinAlbum: albumes.querySelector('p')?.textContent === 'Sin álbum',
+      parcial: Boolean(albumes.querySelector('small')),
+      albumes: [...albumes.querySelectorAll('a')].map(a => ({url:a.href, nombre:a.textContent})),
+      galeria: $('dialog').open, total: Number.parseInt(resultados.querySelector('.summary')?.textContent,10),
+      fotos: [...resultados.querySelectorAll('.grid a')].map(a => ({
+        url:a.href, miniatura:a.querySelector('img')?.getAttribute('src'), titulo:a.title, fecha:a.querySelector('span')?.textContent
+      })),
+      anterior: $('#anterior')?.disabled === false, siguiente: $('#siguiente')?.disabled === false
+    };
   }
   let publishTimer;
   function publish() {
     clearTimeout(publishTimer);
-    publishTimer = setTimeout(()=>window.dispatchEvent(new CustomEvent('gallerypro:view',{detail:{dark:host.hasAttribute('data-dark'),tree:[...root.childNodes].filter(n=>n.id!=='nav-toggle').map(snapshotNode)}})),60);
+    publishTimer = setTimeout(()=>window.dispatchEvent(new CustomEvent('gallerypro:view',{detail:datosPanel()})),60);
   }
   new MutationObserver(records => { if (records.some(record=>record.target!==navToggle)) publish(); }).observe(root,{subtree:true,childList:true,characterData:true,attributes:true});
   window.addEventListener('gallerypro:command',event=>{
@@ -194,10 +176,6 @@ if (!document.getElementById('gallerypro-root')) {
     }
     publish();
   });
-  let actionIndex=0;
-  function identifyButtons() { for(const button of root.querySelectorAll('button')) if(!button.id) button.id='action-'+(++actionIndex); }
-  new MutationObserver(identifyButtons).observe(root,{subtree:true,childList:true});
-  identifyButtons();
   function restore() {
     for (const [element, previous] of hidden) {
       element.style.visibility = previous.visibility;

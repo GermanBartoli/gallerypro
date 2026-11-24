@@ -49,6 +49,7 @@ export function renderGallery(container, state, accountPath, offset = 0, filters
   navigation.className = 'actions';
   for (const [label, next, enabled] of [['Anterior',offset-100,offset>0],['Siguiente',offset+100,offset+100<photos.length]]) {
     const button = document.createElement('button');
+    button.id = label === 'Anterior' ? 'anterior' : 'siguiente';
     button.textContent = label;
     button.disabled = !enabled;
     button.onclick = () => { renderGallery(container,state,accountPath,next,filters); container.scrollTop = 0; };

@@ -1,34 +1,77 @@
+import { destino } from './urls.js';
 const host=document.getElementById('view');
 const root=host.attachShadow({mode:'open'});
 let tabId=null;
-const tags=new Set(['style','section','header','span','button','div','p','label','input','select','option','small','dialog','h2','h3','a','img']);
-function create(data) {
-  if(typeof data==='string') return document.createTextNode(data);
-  if(!data || !tags.has(data.tag)) return document.createTextNode('');
-  const element=document.createElement(data.tag==='dialog'?'section':data.tag);
-  for(const [key,value] of Object.entries(data.attrs||{})) {
-    if(key.startsWith('on') || key==='srcdoc' || key==='style') continue;
-    if((key==='href'||key==='src') && !String(value).startsWith('https://')) continue;
-    element.setAttribute(key,value);
+const texto = (valor, maximo) => typeof valor === 'string' ? valor.slice(0,maximo) : '';
+const opciones = {album:['sin-album','con-album','all'],type:['all','photo','video'],order:['desc','asc'],size:['120','170','240']};
+function render(datos) {
+  if (!datos?.filtros || !Array.isArray(datos.albumes) || !Array.isArray(datos.fotos)) return;
+  const foco = root.activeElement?.id;
+  const scroll = document.scrollingElement.scrollTop;
+  root.replaceChildren();
+  montarPanel(root);
+  const buscar = selector => root.querySelector(selector);
+  const oscuro = datos.oscuro === true;
+  host.toggleAttribute('data-dark',oscuro);
+  document.body.style.background = oscuro ? '#202124' : '#fff';
+  buscar('#panel').hidden = false;
+  buscar('#collapse').hidden = true;
+  for (const [id,valores] of Object.entries(opciones)) {
+    if (valores.includes(datos.filtros[id])) buscar('#'+id).value = datos.filtros[id];
   }
-  if(data.tag==='dialog') {element.id='native-gallery';element.hidden=!('open' in data.attrs);}
-  for(const child of data.children||[]) element.append(create(child));
-  if(data.value!==undefined) element.value=data.value;
-  if(data.checked!==undefined) element.checked=data.checked;
-  if(data.attrs?.['data-size']) element.style.setProperty('--thumbnail-size',data.attrs['data-size']+'px');
-  return element;
-}
-function render(snapshot) {
-  const focus=root.activeElement?.id;
-  const scroll=document.scrollingElement.scrollTop;
-  host.toggleAttribute('data-dark',snapshot.dark);
-  document.body.style.background=snapshot.dark?'#202124':'#fff';
-  root.replaceChildren(...snapshot.tree.map(create));
-  const override=document.createElement('style');
-  override.textContent='.panel{position:static;width:100%;border:0;box-shadow:none;padding:16px}.panel[hidden]{display:block!important}#collapse{display:none}#native-gallery{padding:16px}#results{height:auto;overflow:visible}#native-gallery .grid{grid-template-columns:repeat(auto-fill,minmax(min(var(--thumbnail-size,170px),100%),1fr))}';
-  root.append(override);
-  if(focus) root.getElementById(focus)?.focus({preventScroll:true});
-  document.scrollingElement.scrollTop=scroll;
+  for (const id of ['from','to']) buscar('#'+id).value = texto(datos.filtros[id],10);
+  buscar('#hide').checked = datos.ocultar === true;
+  buscar('#scan').disabled = datos.ocupado === true;
+  buscar('#cancel').disabled = datos.ocupado !== true;
+  if (datos.actualizar === true) buscar('#scan').textContent = 'Actualizar análisis';
+  if (datos.navegacionOculta === true) buscar('#navigation').textContent = 'Mostrar menú izquierdo';
+  const estado = texto(datos.estado,220);
+  const estados = ['Listo para analizar · Solo lectura','Cambió la cuenta. Analizá de nuevo para ver sus resultados.','Análisis cancelado · Resultados incompletos','Google Fotos tardó demasiado · Análisis incompleto'];
+  const progreso = /^(?:Leyendo álbumes|Analizando contenido de álbumes|Leyendo biblioteca|Análisis completo) · \d+\/\d+ álbumes · \d+ elementos$/;
+  buscar('.status').textContent = estados.includes(estado) || progreso.test(estado) ? estado : 'No se pudo completar el análisis.';
+  const albumes = buscar('#photo-albums');
+  if (datos.fotoAbierta === true) {
+    albumes.append(node('h3',{},'Álbumes de este elemento'));
+    for (const album of datos.albumes.slice(0,1000)) {
+      const href = destino(album?.url,'album');
+      if (href) albumes.append(node('a',{href,target:'_blank',rel:'noopener noreferrer'},texto(album.nombre,200)));
+    }
+    if (!albumes.querySelector('a')) albumes.append(node('p',{},datos.sinAlbum === true ? 'Sin álbum' : 'Analizá la biblioteca para comprobar sus álbumes.'));
+    if (datos.parcial === true) albumes.append(node('small',{},'Listado parcial: el análisis todavía no terminó.'));
+  }
+  const dialogo = buscar('dialog');
+  dialogo.open = datos.galeria === true;
+  if (dialogo.open) {
+    const resultados = buscar('#results');
+    if (Number.isSafeInteger(datos.total) && datos.total >= 0) {
+      resultados.append(node('p',{class:'summary'},datos.total+' resultados · Biblioteca principal'));
+      const grid = node('div',{class:'grid'});
+      grid.style.setProperty('--thumbnail-size',buscar('#size').value+'px');
+      for (const foto of datos.fotos.slice(0,100)) {
+        const href = destino(foto?.url,'photo');
+        if (!href) continue;
+        const fecha = texto(foto.fecha,40);
+        const imagen = node('img',{alt:'Foto del '+fecha,loading:'lazy',referrerpolicy:'no-referrer'});
+        const miniatura = destino(foto.miniatura,'miniatura');
+        if (miniatura) imagen.src = miniatura;
+        grid.append(node('a',{href,id:'media-'+grid.children.length,target:'_blank',rel:'noopener noreferrer',title:texto(foto.titulo,500)},imagen,node('span',{},fecha)));
+      }
+      resultados.append(grid);
+      if (!datos.total) resultados.append('No hay resultados para estos filtros.');
+      if (datos.total > 100) {
+        const acciones = node('div',{class:'actions'});
+        for (const [id,etiqueta] of [['anterior','Anterior'],['siguiente','Siguiente']]) {
+          const boton = node('button',{id},etiqueta);
+          boton.disabled = datos[id] !== true;
+          acciones.append(boton);
+        }
+        resultados.append(acciones);
+      }
+    } else resultados.append(node('p',{},'La galería estará disponible cuando termine el análisis completo. Los elementos pendientes no se consideran fotos sin álbum.'));
+  }
+  root.append(node('style',{},'.panel{position:static;width:100%;border:0;box-shadow:none;padding:16px}#collapse,dialog:not([open]){display:none}dialog[open]{position:static;margin:0;padding:16px;width:100%;height:auto;border:0}#results{height:auto;overflow:visible}.grid{grid-template-columns:repeat(auto-fill,minmax(min(var(--thumbnail-size,170px),100%),1fr))}'));
+  if (foco) root.getElementById(foco)?.focus({preventScroll:true});
+  document.scrollingElement.scrollTop = scroll;
 }
 function send(command) {
   if(tabId===null)return;
@@ -50,7 +93,7 @@ root.addEventListener('keydown',event=>{
   if(index>=0 && event.key in steps){event.preventDefault();links[Math.max(0,Math.min(links.length-1,index+steps[event.key]))].focus();}
 });
 chrome.runtime.onMessage.addListener((message,sender)=>{
-  if(message?.kind==='view' && sender.tab?.id===tabId)render(message.snapshot);
+  if(message?.kind==='view' && sender.id===chrome.runtime.id && sender.frameId===0 && sender.url?.startsWith('https://photos.google.com/') && sender.tab?.id===tabId)render(message.snapshot);
 });
 async function connect() {
   const [tab]=await chrome.tabs.query({active:true,currentWindow:true});
